@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Gradle: dental.beam:gltext-1.0.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-1/files-1.1/gltext-1.0.0.aar/e2886c91ddb8475b0c804c914fcb89d4/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-1/files-1.1/gltext-1.0.0.aar/e2886c91ddb8475b0c804c914fcb89d4/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/dental.beam/gltext/1.0.0/dfbca5a36aed43fc461ff037ca4a494ad5d5e96c/gltext-1.0.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
