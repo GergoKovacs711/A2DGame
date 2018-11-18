@@ -99,6 +99,7 @@ public class GameEngine
 
     public void update()
     {
+
         player.update();
     }
 
@@ -111,7 +112,6 @@ public class GameEngine
 
         playing = true;
         frames = 0;
-
     }
 
     public void gameOver()

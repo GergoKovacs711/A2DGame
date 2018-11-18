@@ -47,7 +47,7 @@ public class GameActivity extends AppCompatActivity implements ViewTreeObserver.
 
         this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        toggleFullscreen(true);
+        toggleFullscreen();
     }
 
     @Override
@@ -74,6 +74,7 @@ public class GameActivity extends AppCompatActivity implements ViewTreeObserver.
     {
         surfaceView.startGame();
     }
+
 
     /**
      * when the surfaceView is laid out, figure out where the icons are
@@ -136,12 +137,11 @@ public class GameActivity extends AppCompatActivity implements ViewTreeObserver.
         return r;
     }
 
-    private void toggleFullscreen (boolean fullScreen)
+    private void toggleFullscreen ()
     {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
         {
-            if (fullScreen)
-            {
+
                 getWindow().getDecorView()
                         .setSystemUiVisibility(
                                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -150,12 +150,7 @@ public class GameActivity extends AppCompatActivity implements ViewTreeObserver.
                                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                                         | View.SYSTEM_UI_FLAG_FULLSCREEN
                                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-            }
-            else
-            {
-                getWindow().getDecorView()
-                        .setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-            }
+
         }
     }
 }

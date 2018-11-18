@@ -14,46 +14,46 @@ public class Text extends Texture
     public static final int TEXT_ALIGN_RIGHT = 3;
     public static final int TEXT_NO_ALIGN = 4;
 
-    private String _text;
-    private int _textAlign;
-    private int _textSize;
-    private GLText _glText;
-    private float _width;
-    private float _margin;
-    private float _color[];
+    private final int defaultPaddingY = 30;
+    private String text;
+    private int textAlign;
+    private int textSize;
+    private GLText glText;
+    private float width;
+    private float margin;
+    private float color[];
 
     public void setText (String text, int textAlign, float yOffset, int color)
     {
-        _text = text;
+        this.text = text;
         setTextAlign(textAlign);
         currentPos[1] += yOffset;
-        _color = new float[4];
-        _color[0] = Color.red(color) / 255f;
-        _color[1] = Color.green(color) / 255f;
-        _color[2] = Color.blue(color) / 255f;
-        _color[3] = Color.alpha(color) / 255f;
+        this.color = new float[4];
+        this.color[0] = Color.red(color) / 255f;
+        this.color[1] = Color.green(color) / 255f;
+        this.color[2] = Color.blue(color) / 255f;
+        this.color[3] = Color.alpha(color) / 255f;
     }
 
     public void setText(String text)
     {
-        _text = text;
+        this.text = text;
     }
 
     public void init (float ratio, float width, int textSize)
     {
-        _width = width;
-        _margin = width / 30f;
+        this.width = width;
+        margin = width / 30f;
         currentPos[0] = 0;
         currentPos[1] = ratio;
         currentPos[2] = 0.1f;
 
         alive = false;
 
-        _textSize = textSize;
-        if (_glText == null)
+        this.textSize = textSize;
+        if (glText == null)
         {
-            _glText = new GLText(context.getAssets());
-            _glText.load("ostrich-regular.ttf", textSize, 2, 2);
+            loadText();
         }
     }
 
@@ -72,47 +72,51 @@ public class Text extends Texture
 
         Matrix.translateM(textMatrix, 0, currentPos[0], currentPos[1], currentPos[2]);
         //TODO see if can use gltext.setscale instead of this
-        Matrix.scaleM(textMatrix, 0, 1 / _width * 2, 1 / _width * 2, 1); // the text code we're using assumes a view scaled by phone width/height, so scale it down
+        Matrix.scaleM(textMatrix, 0, 1 / width * 2, 1 / width * 2, 1); // the text code we're using assumes a view scaled by phone width/height, so scale it down
 
         float x = 0;
-        if (_textAlign == TEXT_NO_ALIGN)
+        if (textAlign == TEXT_NO_ALIGN)
         {
             x = 0;
         }
-        else if (_textAlign == TEXT_ALIGN_LEFT)
+        else if (textAlign == TEXT_ALIGN_LEFT)
         {
-            x = -_width / 2 + _margin;
+            x = -width / 2 + margin;
         }
-        else if (_textAlign == TEXT_ALIGN_RIGHT)
+        else if (textAlign == TEXT_ALIGN_RIGHT)
         {
-            x = _width / 2 - _glText.getLength(_text) - _margin;
+            x = width / 2 - glText.getLength(text) - margin;
         }
-        else if (_textAlign == TEXT_ALIGN_CENTER)
+        else if (textAlign == TEXT_ALIGN_CENTER)
         {
-            x = -_glText.getLength(_text) / 2;
+            x = -glText.getLength(text) / 2;
         }
 
-        _glText.begin(_color[0], _color[1], _color[2], 1.0f, textMatrix);
-        _glText.draw(_text, x, 0, 0, 0);
-        _glText.end();
+        glText.begin(color[0], color[1], color[2], 1.0f, textMatrix);
+        glText.draw(text, x, 0, 0, 0);
+        glText.end();
     }
 
     @Override
     public void reloadTexture ()
     {
-        if (_textSize > 0)
+        if (textSize > 0)
         {
-            _glText = new GLText(context.getAssets());
-            _glText.load("OpenSans-Light.ttf", _textSize, 2, 2);
+            loadText();
         }
     }
 
     public void setTextAlign (int textAlign)
     {
-        _textAlign = textAlign;
-        if (_textAlign != TEXT_NO_ALIGN)
+        this.textAlign = textAlign;
+        if (this.textAlign != TEXT_NO_ALIGN)
         {
             currentPos[0] = 0;
         }
+    }
+
+    private void loadText(){
+        glText = new GLText(context.getAssets());
+        glText.load("ostrich-regular.ttf", textSize, 2, defaultPaddingY);
     }
 }

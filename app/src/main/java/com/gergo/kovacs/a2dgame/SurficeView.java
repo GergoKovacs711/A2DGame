@@ -12,7 +12,7 @@ import com.gergo.kovacs.a2dgame.engine.GameEngine;
 public class SurficeView extends GLSurfaceView
 {
     private com.gergo.kovacs.a2dgame.Renderer renderer;
-    private GameEngine _engine;
+    private GameEngine gameEngine;
 
     public SurficeView(Context context)
     {
@@ -20,15 +20,14 @@ public class SurficeView extends GLSurfaceView
         init();
     }
 
-    public SurficeView(Context context, AttributeSet attrs)
+    public SurficeView(Context context, AttributeSet attrSet)
     {
-        super(context, attrs);
+        super(context, attrSet);
         init();
     }
 
     private void init ()
     {
-
         setEGLContextClientVersion(2);
 
         setEGLConfigChooser(false);
@@ -41,8 +40,8 @@ public class SurficeView extends GLSurfaceView
             setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
         }
 
-        _engine = new GameEngine(getContext());
-        renderer.setGameEngine(_engine);
+        gameEngine = new GameEngine(getContext());
+        renderer.setGameEngine(gameEngine);
     }
 
     public void exitGame ()
@@ -53,7 +52,7 @@ public class SurficeView extends GLSurfaceView
             @Override
             public void run ()
             {
-                _engine.destroy();
+                gameEngine.destroy();
             }
         });
     }
@@ -66,21 +65,12 @@ public class SurficeView extends GLSurfaceView
             @Override
             public void run ()
             {
-                _engine.setViewLocations(viewLocations);
+                gameEngine.setViewLocations(viewLocations);
             }
         });
     }*/
 
-    public void startGame ()
-    {
-        // run this on the glthread
-        queueEvent(new Runnable()
-        {
-            @Override
-            public void run ()
-            {
-                _engine.startGame();
-            }
-        });
+    public void startGame (){
+        gameEngine.startGame();
     }
 }

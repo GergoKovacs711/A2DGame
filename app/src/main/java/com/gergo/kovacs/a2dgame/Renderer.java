@@ -13,12 +13,12 @@ import javax.microedition.khronos.opengles.GL10;
 public class Renderer implements GLSurfaceView.Renderer
 {
     // region gl code
-    private final float[] _MVPMatrix = new float[16];
-    private final float[] _projectionMatrix = new float[16];
-    private final float[] _viewMatrix = new float[16];
+    private final float[] MVPMatrix = new float[16];
+    private final float[] projectionMatrix = new float[16];
+    private final float[] viewMatrix = new float[16];
     // endregion
 
-    private GameEngine _engine;
+    private GameEngine gameEngine;
 
     private long fpsTime = System.nanoTime();
     private int frames;
@@ -37,7 +37,7 @@ public class Renderer implements GLSurfaceView.Renderer
 
         Texture.initGlState();
 
-        _engine.initSprites();
+        gameEngine.initSprites();
     }
 
     /**
@@ -57,15 +57,15 @@ public class Renderer implements GLSurfaceView.Renderer
 
         float ratio = (float) height / width;
 
-        _engine.setRatio(ratio, width, height);
+        gameEngine.setRatio(ratio, width, height);
 
-        Matrix.orthoM(_projectionMatrix, 0, -1, 1, -ratio, ratio, 1, -1);
+        Matrix.orthoM(projectionMatrix, 0, -1, 1, -ratio, ratio, 1, -1);
 
         // Set the camera position (View matrix)
-        Matrix.setLookAtM(_viewMatrix, 0, 0, 0, 1, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+        Matrix.setLookAtM(viewMatrix, 0, 0, 0, 1, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
         // Calculate the projection and view transformation
-        Matrix.multiplyMM(_MVPMatrix, 0, _projectionMatrix, 0, _viewMatrix, 0);
+        Matrix.multiplyMM(MVPMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
     }
 
     /**
@@ -77,7 +77,7 @@ public class Renderer implements GLSurfaceView.Renderer
         // Draw background color
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-        _engine.drawFrame(_MVPMatrix);
+        gameEngine.drawFrame(MVPMatrix);
 
         if (System.nanoTime() - fpsTime >= 1000000000)
         {
@@ -93,7 +93,7 @@ public class Renderer implements GLSurfaceView.Renderer
 
     public void setGameEngine (GameEngine engine)
     {
-        _engine = engine;
+        gameEngine = engine;
     }
 
     /**

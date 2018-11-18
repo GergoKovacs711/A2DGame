@@ -22,16 +22,19 @@ import java.util.Map;
  */
 public abstract class Texture implements PoolableSprite
 {
-    //opengl es
+    //region opengl stuff
+    private static final String MVPMATRIX_PARAM = "uMVPMatrix";
+    private static final String POSITION_PARAM = "vPosition";
+    private static final String TEXTURE_COORDINATE_PARAM = "aTextureCoordinate";
 
     private static final String VERTEX_SHADER_CODE =
-            "uniform mat4 uMVPMatrix;" +
-                    "attribute vec4 vPosition;" +
-                    "attribute vec2 aTextureCoordinate;" +
+            "uniform mat4 " + MVPMATRIX_PARAM + ";" +
+                    "attribute vec4 " + POSITION_PARAM + ";" +
+                    "attribute vec2 " + TEXTURE_COORDINATE_PARAM + ";" +
                     "varying vec2 vTexCoordinate;" +
                     "void main() {" +
-                    "  gl_Position = uMVPMatrix * uMVPMatrix;" +
-                    "  vTexCoordinate = uMVPMatrix;" +
+                    "  gl_Position = " + MVPMATRIX_PARAM + " * " + POSITION_PARAM + ";" +
+                    "  vTexCoordinate = " + TEXTURE_COORDINATE_PARAM + ";" +
                     "}";
 
     private static final String FRAGMENT_SHADER_CODE =

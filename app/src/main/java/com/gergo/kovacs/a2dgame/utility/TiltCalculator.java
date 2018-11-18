@@ -21,7 +21,7 @@ public class TiltCalculator implements SensorEventListener
         this.accelerometer = accelerometer;
 
         this.sensorManager.registerListener(this, this.accelerometer, SensorManager.SENSOR_DELAY_GAME);
-    }
+}
 
     @Override
     public void onSensorChanged (SensorEvent event)
