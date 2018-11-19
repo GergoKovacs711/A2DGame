@@ -8,8 +8,8 @@ import com.gergo.kovacs.a2dgame.utility.TiltCalculator;
 
 public class Player extends Texture
 {
-    private static final float TILT_MIN = -25;
-    private static final float TILT_MAX = 25;
+    private static final float TILT_MIN = -15;
+    private static final float TILT_MAX = 15;
     private static final float TILT_SCALE = 2.0f;
     private static float TILT_SLOP = 1f;
     private static float SCALE = 0.15f;
@@ -34,7 +34,7 @@ public class Player extends Texture
         currentScale[0] = SCALE;
         currentScale[1] = SCALE / imageRatio;
         currentPos[0] = 0;
-        currentPos[1] = -this.ratio + currentScale[1] * 3;
+        currentPos[1] =  (currentScale[1] * 3 ) - this.ratio;
         currentPos[2] = 0.1f;
         vector[0] = vector[1] = vector[2] = 0;
         alive = true;

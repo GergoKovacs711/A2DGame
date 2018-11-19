@@ -23,17 +23,17 @@ import java.util.Map;
 public abstract class Texture implements PoolableSprite
 {
     //region opengl stuff
-    private static final String MVPMATRIX_PARAM = "uMVPMatrix";
+    private static final String WORLDMATRIX_PARAM = "uWorldMatrix";
     private static final String POSITION_PARAM = "vPosition";
     private static final String TEXTURE_COORDINATE_PARAM = "aTextureCoordinate";
 
     private static final String VERTEX_SHADER_CODE =
-            "uniform mat4 " + MVPMATRIX_PARAM + ";" +
+            "uniform mat4 " + WORLDMATRIX_PARAM + ";" +
                     "attribute vec4 " + POSITION_PARAM + ";" +
                     "attribute vec2 " + TEXTURE_COORDINATE_PARAM + ";" +
                     "varying vec2 vTexCoordinate;" +
                     "void main() {" +
-                    "  gl_Position = " + MVPMATRIX_PARAM + " * " + POSITION_PARAM + ";" +
+                    "  gl_Position = " + WORLDMATRIX_PARAM + " * " + POSITION_PARAM + ";" +
                     "  vTexCoordinate = " + TEXTURE_COORDINATE_PARAM + ";" +
                     "}";
 
@@ -71,14 +71,14 @@ public abstract class Texture implements PoolableSprite
 
     private static final int VERTEX_STRIDE = COORDS_PER_VERTEX * 4; // 4 bytes per vertex
 
-    private static FloatBuffer _vertexBuffer;
-    private static ShortBuffer _drawListBuffer;
-    private static FloatBuffer _textureBuffer;
+    private static FloatBuffer vertexBuffer;
+    private static ShortBuffer drawListBuffer;
+    private static FloatBuffer textureBuffer;
 
-    protected static int _programHandle;
+    protected static int programHandle;
 
     protected static int positionHandle = -1;
-    protected static int mvpMatrixHandle = -1;
+    protected static int worldMatrixHandle = -1;
     protected static int textureCoordinateHandle = -1;
 
     protected int textureDataHandle;
@@ -117,9 +117,7 @@ public abstract class Texture implements PoolableSprite
 
     protected Context context;
 
-    protected Texture()
-    {
-    }
+    protected Texture() {}
 
     public void setDrawable(int drawableResourceId)
     {
@@ -138,36 +136,36 @@ public abstract class Texture implements PoolableSprite
         // initialize vertex byte buffer for shape coordinates
         ByteBuffer bb = ByteBuffer.allocateDirect(SQUARE_COORDINATES.length * 4);
         bb.order(ByteOrder.nativeOrder());
-        _vertexBuffer = bb.asFloatBuffer();
-        _vertexBuffer.put(SQUARE_COORDINATES);
-        _vertexBuffer.position(0);
+        vertexBuffer = bb.asFloatBuffer();
+        vertexBuffer.put(SQUARE_COORDINATES);
+        vertexBuffer.position(0);
 
         // initialize texture byte buffer for texture coordinates
         bb = ByteBuffer.allocateDirect(TEXTURE_COORDINATES.length * 4);
         bb.order(ByteOrder.nativeOrder());
-        _textureBuffer = bb.asFloatBuffer();
-        _textureBuffer.put(TEXTURE_COORDINATES);
-        _textureBuffer.position(0);
+        textureBuffer = bb.asFloatBuffer();
+        textureBuffer.put(TEXTURE_COORDINATES);
+        textureBuffer.position(0);
 
         // initialize byte buffer for the draw list
         ByteBuffer dlb = ByteBuffer.allocateDirect(DRAW_ORDER.length * 2);
         dlb.order(ByteOrder.nativeOrder());
-        _drawListBuffer = dlb.asShortBuffer();
-        _drawListBuffer.put(DRAW_ORDER);
-        _drawListBuffer.position(0);
+        drawListBuffer = dlb.asShortBuffer();
+        drawListBuffer.put(DRAW_ORDER);
+        drawListBuffer.position(0);
 
         int vertexShader = Renderer.loadShader(GLES20.GL_VERTEX_SHADER, VERTEX_SHADER_CODE);
         int fragmentShader = Renderer.loadShader(GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER_CODE);
-        _programHandle = GLES20.glCreateProgram();             // create empty OpenGL Program
-        GLES20.glAttachShader(_programHandle, vertexShader);   // add the vertex shader to program
-        GLES20.glAttachShader(_programHandle, fragmentShader); // add the fragment shader to program
+        programHandle = GLES20.glCreateProgram();             // create empty OpenGL Program
+        GLES20.glAttachShader(programHandle, vertexShader);   // add the vertex shader to program
+        GLES20.glAttachShader(programHandle, fragmentShader); // add the fragment shader to program
 
-        GLES20.glBindAttribLocation(_programHandle, 0, TEXTURE_COORDINATE_PARAM);
-        GLES20.glLinkProgram(_programHandle);
+        GLES20.glBindAttribLocation(programHandle, 0, TEXTURE_COORDINATE_PARAM);
+        GLES20.glLinkProgram(programHandle);
 
-        positionHandle = GLES20.glGetAttribLocation(_programHandle, POSITION_PARAM);
-        textureCoordinateHandle = GLES20.glGetAttribLocation(_programHandle, TEXTURE_COORDINATE_PARAM);
-        mvpMatrixHandle = GLES20.glGetUniformLocation(_programHandle, MVPMATRIX_PARAM);
+        positionHandle = GLES20.glGetAttribLocation(programHandle, POSITION_PARAM);
+        textureCoordinateHandle = GLES20.glGetAttribLocation(programHandle, TEXTURE_COORDINATE_PARAM);
+        worldMatrixHandle = GLES20.glGetUniformLocation(programHandle, WORLDMATRIX_PARAM);
     }
 
     /**
@@ -180,18 +178,18 @@ public abstract class Texture implements PoolableSprite
     public void batchDraw (float[] mvpMatrix, List<Texture> sprites)
     {
         // Add program to OpenGL environment
-        GLES20.glUseProgram(_programHandle);
+        GLES20.glUseProgram(programHandle);
 
         // Enable a handle to the vertices
         GLES20.glEnableVertexAttribArray(positionHandle);
 
         // Prepare the coordinate data
-        GLES20.glVertexAttribPointer(positionHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, VERTEX_STRIDE, _vertexBuffer);
+        GLES20.glVertexAttribPointer(positionHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, VERTEX_STRIDE, vertexBuffer);
 
         // set texture
-        _textureBuffer.position(0);
+        textureBuffer.position(0);
         GLES20.glEnableVertexAttribArray(textureCoordinateHandle);
-        GLES20.glVertexAttribPointer(textureCoordinateHandle, 2, GLES20.GL_FLOAT, false, 0, _textureBuffer);
+        GLES20.glVertexAttribPointer(textureCoordinateHandle, 2, GLES20.GL_FLOAT, false, 0, textureBuffer);
 
         int size = sprites.size();
         for (int i = 0; i < size; i++)
@@ -211,10 +209,10 @@ public abstract class Texture implements PoolableSprite
             Matrix.scaleM(scratchMatrix, 0, sprite.currentScale[0], sprite.currentScale[1], 1);
 
             // Apply the projection and view transformation
-            GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, scratchMatrix, 0);
+            GLES20.glUniformMatrix4fv(worldMatrixHandle, 1, false, scratchMatrix, 0);
 
             // Draw the sprite
-            GLES20.glDrawElements(GLES20.GL_TRIANGLES, DRAW_ORDER.length, GLES20.GL_UNSIGNED_SHORT, _drawListBuffer);
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, DRAW_ORDER.length, GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
         }
 
         // Disable vertex array
@@ -227,20 +225,20 @@ public abstract class Texture implements PoolableSprite
         System.arraycopy(mvpMatrix, 0, scratchMatrix, 0, 16);
 
         // Add program to OpenGL environment
-        GLES20.glUseProgram(_programHandle);
+        GLES20.glUseProgram(programHandle);
 
         // Enable a handle to the vertices
         GLES20.glEnableVertexAttribArray(positionHandle);
 
         // Prepare the coordinate data
-        GLES20.glVertexAttribPointer(positionHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, VERTEX_STRIDE, _vertexBuffer);
+        GLES20.glVertexAttribPointer(positionHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, VERTEX_STRIDE, vertexBuffer);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureDataHandle);
 
-        _textureBuffer.position(0);
+        textureBuffer.position(0);
         GLES20.glEnableVertexAttribArray(textureCoordinateHandle);
-        GLES20.glVertexAttribPointer(textureCoordinateHandle, 2, GLES20.GL_FLOAT, false, 0, _textureBuffer);
+        GLES20.glVertexAttribPointer(textureCoordinateHandle, 2, GLES20.GL_FLOAT, false, 0, textureBuffer);
 
         // translate the sprite to it's current position
         Matrix.translateM(scratchMatrix, 0, currentPos[0], currentPos[1], currentPos[2]);
@@ -250,10 +248,10 @@ public abstract class Texture implements PoolableSprite
         Matrix.scaleM(scratchMatrix, 0, currentScale[0], currentScale[1], 1);
 
         // Apply the projection and view transformation
-        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, scratchMatrix, 0);
+        GLES20.glUniformMatrix4fv(worldMatrixHandle, 1, false, scratchMatrix, 0);
 
         // Draw the sprite
-        GLES20.glDrawElements(GLES20.GL_TRIANGLES, DRAW_ORDER.length, GLES20.GL_UNSIGNED_SHORT, _drawListBuffer);
+        GLES20.glDrawElements(GLES20.GL_TRIANGLES, DRAW_ORDER.length, GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(positionHandle);
@@ -268,19 +266,6 @@ public abstract class Texture implements PoolableSprite
      * adjust that if you want a smaller or offset collision circle
      * Note: Adjusts the center and radius using the scale of the sprite IN THE X DIRECTION
      */
-    public boolean collidesWith (Texture other)
-    {
-        float dist = distance(
-                currentPos[0] + center[0] * currentScale[0],
-                currentPos[1] + center[1] * currentScale[0],
-                other.currentPos[0] + other.center[0] * other.currentScale[0],
-                other.currentPos[1] + other.center[1] * other.currentScale[1]);
-        if (dist < radius * currentScale[0] + other.radius * other.currentScale[0])
-        {
-            return true;
-        }
-        return false;
-    }
 
     float distance (float x1, float y1, float x2, float y2)
     {

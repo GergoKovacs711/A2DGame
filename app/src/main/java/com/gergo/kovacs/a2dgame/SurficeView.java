@@ -2,11 +2,13 @@ package com.gergo.kovacs.a2dgame;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 
 import com.gergo.kovacs.a2dgame.engine.GameEngine;
 
+import java.util.Map;
 
 
 public class SurficeView extends GLSurfaceView
@@ -69,6 +71,19 @@ public class SurficeView extends GLSurfaceView
             }
         });
     }*/
+
+    public void setViewLocations (final Map<Integer, Rect> viewLocations)
+    {
+        // run this on the glthread
+        queueEvent(new Runnable()
+        {
+            @Override
+            public void run ()
+            {
+                gameEngine.setViewLocations(viewLocations);
+            }
+        });
+    }
 
     public void startGame (){
         gameEngine.startGame();

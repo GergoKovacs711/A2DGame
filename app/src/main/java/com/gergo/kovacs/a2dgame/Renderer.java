@@ -10,15 +10,15 @@ import com.gergo.kovacs.a2dgame.sprite.util.Texture;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import timber.log.Timber;
+
 public class Renderer implements GLSurfaceView.Renderer
 {
-    // region gl code
-    private final float[] MVPMatrix = new float[16];
+    private GameEngine gameEngine;
+
+    private final float[] worldMatrix = new float[16];
     private final float[] projectionMatrix = new float[16];
     private final float[] viewMatrix = new float[16];
-    // endregion
-
-    private GameEngine gameEngine;
 
     private long fpsTime = System.nanoTime();
     private int frames;
@@ -27,7 +27,7 @@ public class Renderer implements GLSurfaceView.Renderer
     public void onSurfaceCreated (GL10 gl, EGLConfig config)
     {
 
-        GLES20.glClearColor(0.09019f, 0.10588f, 0.13333f, 0.0f);
+        GLES20.glClearColor(0.09019f, 0.10588f, 0.33333f, 0.0f);
 
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendEquation(GLES20.GL_FUNC_ADD);
@@ -36,7 +36,6 @@ public class Renderer implements GLSurfaceView.Renderer
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         Texture.initGlState();
-
         gameEngine.initSprites();
     }
 
@@ -56,16 +55,15 @@ public class Renderer implements GLSurfaceView.Renderer
         GLES20.glViewport(0, 0, width, height);
 
         float ratio = (float) height / width;
-
         gameEngine.setRatio(ratio, width, height);
 
         Matrix.orthoM(projectionMatrix, 0, -1, 1, -ratio, ratio, 1, -1);
 
         // Set the camera position (View matrix)
-        Matrix.setLookAtM(viewMatrix, 0, 0, 0, 1, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+        Matrix.setLookAtM(viewMatrix, 0, 0, 0, 1.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
         // Calculate the projection and view transformation
-        Matrix.multiplyMM(MVPMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
+        Matrix.multiplyMM(worldMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
     }
 
     /**
@@ -77,7 +75,7 @@ public class Renderer implements GLSurfaceView.Renderer
         // Draw background color
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-        gameEngine.drawFrame(MVPMatrix);
+        gameEngine.drawFrame(worldMatrix);
 
         if (System.nanoTime() - fpsTime >= 1000000000)
         {
@@ -137,7 +135,7 @@ public class Renderer implements GLSurfaceView.Renderer
         int error;
         while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR)
         {
-            // TODO
+            Timber.e(glOperation + ": glError %d", error);
         }
     }
 }

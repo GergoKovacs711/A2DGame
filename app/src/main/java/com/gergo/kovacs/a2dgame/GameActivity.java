@@ -83,7 +83,7 @@ public class GameActivity extends AppCompatActivity implements ViewTreeObserver.
     @Override
     public void onGlobalLayout ()
     {
-//        surfaceView.setViewLocations(getViewLocations());
+        surfaceView.setViewLocations(getViewLocations());
     }
 
     private Map<Integer, Rect> getViewLocations ()

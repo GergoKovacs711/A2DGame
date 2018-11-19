@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="placeholder1_text_size">32sp</dimen>
+    <dimen name="tilt_counter_text_size">32sp</dimen>
     <dimen name="end_of_game_text_size">50sp</dimen>
 </resources>
