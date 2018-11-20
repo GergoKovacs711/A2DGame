@@ -71,8 +71,7 @@ public class Text extends Texture
         System.arraycopy(mvpMatrix, 0, textMatrix, 0, 16);
 
         Matrix.translateM(textMatrix, 0, currentPos[0], currentPos[1], currentPos[2]);
-        //TODO see if can use gltext.setscale instead of this
-        Matrix.scaleM(textMatrix, 0, 1 / width * 2, 1 / width * 2, 1); // the text code we're using assumes a view scaled by phone width/height, so scale it down
+        Matrix.scaleM(textMatrix, 0, 1 / width * 2, 1 / width * 2, 1);
 
         float x = 0;
         if (textAlign == TEXT_NO_ALIGN)

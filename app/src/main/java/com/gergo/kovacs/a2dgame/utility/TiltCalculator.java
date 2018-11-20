@@ -5,11 +5,12 @@ import android.hardware.Sensor;
         import android.hardware.SensorEventListener;
         import android.hardware.SensorManager;
 
+import timber.log.Timber;
 
 
 public class TiltCalculator implements SensorEventListener
 {
-    private static final float TILT_MAX = 90.0f;
+    private static final float TILT_SCALER = 90.0f;
 
     private final SensorManager sensorManager;
     private final Sensor accelerometer;
@@ -52,15 +53,8 @@ public class TiltCalculator implements SensorEventListener
             return 0;
         }
 
-        // We're going to assume that the user isn't waving their phone around like a maniac so the
-        // only force acting on it should be gravity. This means that the sum of the absolute values
-        // of all axes should be roughly equal to 9.8 so we should be able to see how much fo that
-        // is taken up by the y axis. What ever is left is available for the x/z tilt we're interested in.
-        // Then it just becomes a simple ratio to see how much of the space we have left is taken up
-        // by the pull of gravity on the x axis.
-        float availableRange = acceleration[1] - accelerometer.getMaximumRange();
-        float amountOfTile = acceleration[0] / availableRange;
-        return amountOfTile * TILT_MAX;
+        float amountOfTilt = acceleration[0] / accelerometer.getMaximumRange();
+        return - (amountOfTilt * TILT_SCALER);
     }
 
     public void destroy ()

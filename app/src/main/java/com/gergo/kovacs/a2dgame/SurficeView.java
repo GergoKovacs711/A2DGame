@@ -59,18 +59,6 @@ public class SurficeView extends GLSurfaceView
         });
     }
 
-/*    public void setViewLocations (final Map<Integer, Rect> viewLocations)
-    {
-        // run this on the glthread
-        queueEvent(new Runnable()
-        {
-            @Override
-            public void run ()
-            {
-                gameEngine.setViewLocations(viewLocations);
-            }
-        });
-    }*/
 
     public void setViewLocations (final Map<Integer, Rect> viewLocations)
     {

@@ -29,8 +29,6 @@ public class TiltIndicator extends Texture
         currentPos[1] = posY;
         currentPos[2] = 0.1f;
 
-        alive = false;
-
         this.textSize = textSize;
         if (glText == null)
         {
@@ -45,13 +43,13 @@ public class TiltIndicator extends Texture
     }
 
     @Override
-    public void draw (float[] mvpMatrix)
+    public void draw (float[] worldMatrix)
     {
-        System.arraycopy(mvpMatrix, 0, textMatrix, 0, 16);
+        System.arraycopy(worldMatrix, 0, textMatrix, 0, 16);
 
         Matrix.translateM(textMatrix, 0, currentPos[0], currentPos[1], currentPos[2]);
-        //TODO see if can use gltext.setscale instead of this
-        Matrix.scaleM(textMatrix, 0, 1 / width * 2, 1 / width * 2, 1); // the text code we're using assumes a view scaled by phone width/height, so scale it down
+
+        Matrix.scaleM(textMatrix, 0, 1 / width * 2, 1 / width * 2, 1);
 
         float x = currentPos[0] - glText.getLength(text) / 2;
         float y = currentPos[1] - (glText.getHeight() / 2);

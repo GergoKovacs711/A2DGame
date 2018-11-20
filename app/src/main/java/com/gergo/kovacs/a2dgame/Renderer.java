@@ -45,7 +45,6 @@ public class Renderer implements GLSurfaceView.Renderer
      *  x-axis goes from -1=left edge to 1=right edge
      *  y-axis -X=bottom edge to X=top edge,
      *  	where X is the ratio of height/width.
-     *  	On Nexus 6 it's around 1.7 but will vary by device
      */
     @Override
     public void onSurfaceChanged (GL10 unused, int width, int height)
@@ -66,9 +65,6 @@ public class Renderer implements GLSurfaceView.Renderer
         Matrix.multiplyMM(worldMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
     }
 
-    /**
-     * Draw a new frame of the game
-     */
     @Override
     public void onDrawFrame (GL10 unused)
     {
@@ -94,17 +90,6 @@ public class Renderer implements GLSurfaceView.Renderer
         gameEngine = engine;
     }
 
-    /**
-     * Utility method for compiling a OpenGL shader.
-     *
-     * <p><strong>Note:</strong> When developing shaders, use the checkGlError()
-     * method to debug shader coding errors.</p>
-     *
-     * @param type       - Vertex or fragment shader type.
-     * @param shaderCode - String containing the shader code.
-     * @return - Returns an id for the shader.
-     */
-
     public static int loadShader (int type, String shaderCode)
     {
         // create a vertex shader type (GLES20.GL_VERTEX_SHADER)
@@ -118,24 +103,4 @@ public class Renderer implements GLSurfaceView.Renderer
         return shader;
     }
 
-    /**
-     * Utility method for debugging OpenGL calls. Provide the name of the call
-     * just after making it:
-     *
-     * <pre>
-     * mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
-     * Renderer.checkGlError("glGetUniformLocation");</pre>
-     *
-     * If the operation is not successful, the check logs an error
-     *
-     * @param glOperation - Name of the OpenGL call to check.
-     */
-    public static void checkGlError (String glOperation)
-    {
-        int error;
-        while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR)
-        {
-            Timber.e(glOperation + ": glError %d", error);
-        }
-    }
 }
