@@ -10,7 +10,7 @@ import timber.log.Timber;
 
 public class TiltCalculator implements SensorEventListener
 {
-    private static final float TILT_SCALER = 90.0f;
+    private static final float TILT_SCALER = 100.0f;
 
     private final SensorManager sensorManager;
     private final Sensor accelerometer;

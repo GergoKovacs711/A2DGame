@@ -258,14 +258,20 @@ public abstract class Texture implements PoolableSprite
         GLES20.glDisableVertexAttribArray(textureCoordinateHandle);
     }
 
-    /**
-     * Simple collision detection which considers each sprite a circle
-     * Does calculation to see if the distance between two sprites is less than sum of the two sprites radii
-     *
-     * By default a sprite has a collision circle centered in the sprite with radius 1 but you can
-     * adjust that if you want a smaller or offset collision circle
-     * Note: Adjusts the center and radius using the scale of the sprite IN THE X DIRECTION
-     */
+
+    public boolean collidesWith (Texture otherTexture)
+    {
+        float dist = distance(
+                currentPos[0] + center[0] * currentScale[0],
+                currentPos[1] + center[1] * currentScale[0],
+                otherTexture.currentPos[0] + otherTexture.center[0] * otherTexture.currentScale[0],
+                otherTexture.currentPos[1] + otherTexture.center[1] * otherTexture.currentScale[1]);
+        if (dist < radius * currentScale[0] + otherTexture.radius * otherTexture.currentScale[0])
+        {
+            return true;
+        }
+        return false;
+    }
 
     float distance (float x1, float y1, float x2, float y2)
     {

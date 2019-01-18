@@ -76,10 +76,6 @@ public class GameActivity extends AppCompatActivity implements ViewTreeObserver.
     }
 
 
-    /**
-     * when the surfaceView is laid out, figure out where the icons are
-     * and tell the opengl code about that location so it can convert it to opengl coordinates
-     */
     @Override
     public void onGlobalLayout ()
     {
