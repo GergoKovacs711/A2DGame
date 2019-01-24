@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">2DGame</string>
+    <string name="high_score_key">highscore</string>
+    <string name="shared_preference_data">app_data</string>
 </resources>

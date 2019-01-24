@@ -9,6 +9,8 @@ public abstract class Moveable extends Texture
         this.ratio = ratio;
     }
 
+    public abstract void initIcon (float posX, float posY, float scaleX, float scaleY);
+
     public boolean update ()
     {
         if (!super.alive)

@@ -26,13 +26,14 @@ public class Enemy extends Moveable {
         super.currentPos[1] = 0;
         super.currentPos[2] = 0.1f;
 
-        super.vector[0] = RNG.randomFloatBetween(-0.002f, 0.002f);
+        super.vector[0] = RNG.randomFloatBetween(-0.006f, 0.006f);
         super.vector[1] = RNG.randomFloatBetween(-0.03f, -0.02f);
         super.rotationz = RNG.randomFloatBetween(-90, 90);
         rotationDelta = RNG.randomFloatBetween(-2, 2);
         super.alive = true;
     }
 
+    @Override
     public void initIcon (float posX, float posY, float scaleX, float scaleY)
     {
         super.textureDataHandle = loadGLTexture(super.drawableResourceId);
@@ -47,6 +48,7 @@ public class Enemy extends Moveable {
         super.alive = true;
     }
 
+    @Override
     public void setRatio (float ratio)
     {
         super.setRatio(ratio);
@@ -70,5 +72,9 @@ public class Enemy extends Moveable {
         }
 
         return super.update();
+    }
+
+    public void setResource(int resourceId){
+        this.drawableResourceId = resourceId;
     }
 }

@@ -3,4 +3,7 @@
     <dimen name="placeholder1_text_size">32sp</dimen>
     <dimen name="tilt_counter_text_size">32sp</dimen>
     <dimen name="end_of_game_text_size">50sp</dimen>
+    <dimen name="high_score_text_size">45sp</dimen>
+    <dimen name="your_score_text_size">45sp</dimen>
+    <dimen name="counter_text_size">30sp</dimen>
 </resources>

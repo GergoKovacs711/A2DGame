@@ -118,4 +118,8 @@ public class Text extends Texture
         glText = new GLText(context.getAssets());
         glText.load("ostrich-regular.ttf", textSize, 2, defaultPaddingY);
     }
+
+    public float getCellHeight(){
+        return glText.getHeight();
+    }
 }

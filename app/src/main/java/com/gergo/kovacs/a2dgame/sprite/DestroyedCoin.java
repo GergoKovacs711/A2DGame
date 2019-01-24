@@ -1,4 +1,4 @@
-package com.gergo.kovacs.a2dgame.sprite.util;
+package com.gergo.kovacs.a2dgame.sprite;
 
 import com.gergo.kovacs.a2dgame.R;
 import com.gergo.kovacs.a2dgame.sprite.Coin;

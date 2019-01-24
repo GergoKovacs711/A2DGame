@@ -1,10 +1,9 @@
 package com.gergo.kovacs.a2dgame.engine;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.support.v4.app.DialogFragment;
-import android.widget.Spinner;
 
 import com.gergo.kovacs.a2dgame.R;
 import com.gergo.kovacs.a2dgame.sprite.Coin;
@@ -12,9 +11,11 @@ import com.gergo.kovacs.a2dgame.sprite.Enemy;
 import com.gergo.kovacs.a2dgame.sprite.KilledEnemy;
 import com.gergo.kovacs.a2dgame.sprite.Player;
 import com.gergo.kovacs.a2dgame.sprite.Text;
-import com.gergo.kovacs.a2dgame.sprite.util.DestroyedCoin;
+import com.gergo.kovacs.a2dgame.sprite.DestroyedCoin;
+import com.gergo.kovacs.a2dgame.sprite.util.Moveable;
 import com.gergo.kovacs.a2dgame.sprite.util.SpritePool;
 import com.gergo.kovacs.a2dgame.sprite.util.Texture;
+import com.gergo.kovacs.a2dgame.utility.RNG;
 import com.gergo.kovacs.a2dgame.utility.TiltCalculator;
 import com.gergo.kovacs.a2dgame.utility.TiltInfo;
 
@@ -23,8 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class GameEngine
-{
+public class GameEngine {
     Context context;
 
     private TiltCalculator tiltCalculator;
@@ -48,8 +48,15 @@ public class GameEngine
     private Text enemyCountText;
 
     private Text endOfGameText;
-    private Text tiltIndicator;
-    private Text fpsIndicator;
+    private Text highScoreText;
+    private Text yourScoreText;
+    //private Text tiltIndicator;
+    //private Text fpsIndicator;
+    private Text coinIndicator;
+    private Coin coinIcon;
+
+    private Text scoreIndicator;
+    private Enemy scoreIcon;
     //endregion
 
     //region game state
@@ -59,8 +66,12 @@ public class GameEngine
     private float fps;
     private long startTime;
 
-    private int enemyCount;
+    private int currentScore = 0;
     private int framesBetweenAddingEnemies = 64;
+
+    private long highScore;
+    private boolean changeCoinSpeed = false;
+
 
     //endregion
 
@@ -73,8 +84,7 @@ public class GameEngine
 
     //endregion
 
-    public GameEngine (Context context)
-    {
+    public GameEngine(Context context) {
         this.context = context;
 
         coinPool = new SpritePool<>(context, 5, Coin.class);
@@ -85,50 +95,119 @@ public class GameEngine
         startGame();
     }
 
-    public void initSprites ()
-    {
+    private void loadHighScore(){
+        SharedPreferences sharedPref = context.getSharedPreferences(
+                context.getString(R.string.shared_preference_data), Context.MODE_PRIVATE);
+        highScore = sharedPref.getLong(
+                context.getResources().getString(R.string.high_score_key), 0);
+    }
+
+    private void saveHighScore(long newHighScore){
+            SharedPreferences sharedPref = context.getSharedPreferences(
+                    context.getString(R.string.shared_preference_data), Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putLong(context.getString(R.string.high_score_key), newHighScore);
+            editor.apply();
+    }
+
+    public void initSprites() {
         Texture.clearTextureCache();
 
         // player Init
-        if (player == null)
-        {
+        if (player == null) {
             tiltCalculator = TiltInfo.getCalculator(context);
             player = new Player(context, R.drawable.player, tiltCalculator);
-        }
-        else
-        {
+        } else {
             player.reloadTexture();
         }
 
         // coins Init
         int coinsCount = coinPool.getSprites().size();
-        for (int i = 0; i < coinsCount; i++)
-        {
+        for (int i = 0; i < coinsCount; i++) {
             Coin coin = coinPool.getSprites().get(i);
             coin.reloadTexture();
         }
 
+       /* // destroyed coins Init
+        int destroyedCoinsCount = destroyedCoinPool.getSprites().size();
+        for (int i = 0; i < destroyedCoinsCount; i++) {
+            DestroyedCoin destroyedCoin = destroyedCoinPool.getSprites().get(i);
+            destroyedCoin.reloadTexture();
+        }*/
+
+
         // enemy Init
         int currentEnemyCount = enemyPool.getSprites().size();
-        for (int i = 0; i < currentEnemyCount; i++)
-        {
+        for (int i = 0; i < currentEnemyCount; i++) {
             Enemy enemy = enemyPool.getSprites().get(i);
             enemy.reloadTexture();
         }
 
+        /*// killed enemy Init
+        int currentkilledEnemyCount = killedEnemyPool.getSprites().size();
+        for (int i = 0; i < currentkilledEnemyCount; i++) {
+            KilledEnemy killedEnemy = killedEnemyPool.getSprites().get(i);
+            killedEnemy.reloadTexture();
+        }*/
+
         // end of game text Init
-        if (endOfGameText == null)
-        {
+        if (endOfGameText == null) {
             endOfGameText = new Text();
             endOfGameText.setContext(context);
             endOfGameText.setText("Game Over", Text.TEXT_ALIGN_CENTER, 0, Color.WHITE);
-        }
-        else
-        {
+        } else {
             endOfGameText.reloadTexture();
         }
 
-        // tilt indicator Init
+        // highscore text Init
+        if (highScoreText == null) {
+            highScoreText = new Text();
+            highScoreText.setContext(context);
+            highScoreText.setText("High Score", Text.TEXT_ALIGN_CENTER, 0, Color.WHITE);
+        } else {
+            highScoreText.reloadTexture();
+        }
+
+        // player score text Init
+        if (yourScoreText == null) {
+            yourScoreText = new Text();
+            yourScoreText.setContext(context);
+            yourScoreText.setText("Your Score", Text.TEXT_ALIGN_CENTER, 0, Color.WHITE);
+        } else {
+            yourScoreText.reloadTexture();
+        }
+
+
+        if (coinIndicator == null) {
+            coinIndicator = new Text();
+            coinIndicator.setContext(context);
+            coinIndicator.setText("coinsCount", Text.TEXT_ALIGN_CENTER, 0, Color.WHITE);
+        } else {
+            coinIndicator.reloadTexture();
+        }
+
+        if (coinIcon == null){
+            coinIcon = coinPool.spawn();
+        }else {
+            coinIcon.reloadTexture();
+        }
+
+        if (scoreIndicator == null) {
+            scoreIndicator = new Text();
+            scoreIndicator.setContext(context);
+            scoreIndicator.setText("0", Text.TEXT_ALIGN_CENTER, 0, Color.WHITE);
+        } else {
+            scoreIndicator.reloadTexture();
+        }
+
+        if (scoreIcon == null){
+            scoreIcon = enemyPool.spawn();
+            scoreIcon.setResource(R.drawable.score_icon);
+        }else {
+            scoreIcon.reloadTexture();
+        }
+
+        /*// tilt indicator Init
         if (tiltIndicator == null)
         {
             tiltIndicator = new Text();
@@ -150,35 +229,59 @@ public class GameEngine
         else
         {
             fpsIndicator.reloadTexture();
-        }
+        }*/
 
     }
 
-    public void setViewLocations (Map<Integer, Rect> viewLocations)
-    {
+    public void setViewLocations(Map<Integer, Rect> viewLocations) {
         this.viewLocations = viewLocations;
-        if (ratio != 0)
-        {
-            initHUDText(tiltIndicator, Double.toString(tiltCalculator.getTilt()),
+        if (ratio != 0) {
+            initHUDText(coinIndicator, Integer.toString(coinPool.getSprites().size()),
+                    Text.TEXT_NO_ALIGN, ratio, R.id.coin_counter);
+            initHUDText(scoreIndicator, "0",
+                    Text.TEXT_NO_ALIGN, ratio, R.id.score_counter);
+
+            initHUDIcon(coinIcon, ratio, R.id.counter_icon);
+            initHUDIcon(scoreIcon, ratio, R.id.score_icon);
+
+           /* initHUDText(tiltIndicator, Double.toString(tiltCalculator.getTilt()),
                     Text.TEXT_NO_ALIGN, ratio, R.id.tilt_counter_text);
             initHUDText(fpsIndicator, "0",
-                    Text.TEXT_NO_ALIGN, ratio, R.id.fps_text);
+                    Text.TEXT_NO_ALIGN, ratio, R.id.fps_text);*/
         }
     }
 
-    private void initHUDText (Text text, String strText, int textAlign, float ratio, int id)
-    {
+    private void initHUDText(Text text, String strText, int textAlign, float ratio, int id) {
         float coords[] = new float[2];
 
-        text.init(ratio, width, Math.round(context.getResources().getDimension(R.dimen.placeholder1_text_size)));
-        text.setText("asdasdasd", textAlign, 0, Color.WHITE);
+        text.init(ratio, width, Math.round(context.getResources().getDimension(R.dimen.counter_text_size)));
+        text.setText(strText, textAlign, 0, Color.WHITE);
 
         convertAndroidLocationToGL(coords, viewLocations.get(id));
-        if (textAlign == Text.TEXT_NO_ALIGN)
-        {
+        if (textAlign == Text.TEXT_NO_ALIGN) {
             text.getPosition()[0] = coords[0];
         }
         text.getPosition()[1] = coords[1];
+    }
+
+    private void initHUDIcon (Moveable icon, float ratio, int id)
+    {
+        float coords[] = new float[2];
+        float scale[] = new float[2];
+
+        icon.setRatio(ratio);
+        Rect position = viewLocations.get(id);
+        convertAndroidLocationToGLCentered(coords, position);
+        convertAndroidLocationToGLScale(scale, position);
+        icon.initIcon(coords[0], coords[1], scale[0], scale[1]);
+    }
+
+    private void convertAndroidLocationToGLCentered (float glPos[], Rect androidLocation)
+    {
+        glPos[0] = androidLocation.centerX() / width * 2 - 1;
+        float yPercentage = androidLocation.centerY() / height;
+        float yPercentageGl = yPercentage * 2 * ratio;
+        glPos[1] = -(yPercentageGl - ratio);
     }
 
     private void convertAndroidLocationToGL (float glPos[], Rect androidLocation)
@@ -189,9 +292,16 @@ public class GameEngine
         glPos[1] = -(yPercentageGl - ratio);
     }
 
-    /** ratio is height/width of screen which affects where in Y coordinate to place sprites */
-    public void setRatio (float ratio, float width, float height)
+    private void convertAndroidLocationToGLScale (float glScale[], Rect androidLocation)
     {
+        glScale[0] = androidLocation.width() / width;
+        glScale[1] = androidLocation.width() / width;
+    }
+
+    /**
+     * ratio is height/width of screen which affects where in Y coordinate to place sprites
+     */
+    public void setRatio(float ratio, float width, float height) {
         this.ratio = ratio;
         this.width = width;
         this.height = height;
@@ -199,141 +309,158 @@ public class GameEngine
         player.setRatio(ratio);
 
         int coinCount = coinPool.getSprites().size();
-        for (int i = 0; i < coinCount; i++)
-        {
+        for (int i = 0; i < coinCount; i++) {
             Coin coin = coinPool.getSprites().get(i);
             coin.setRatio(ratio);
         }
 
-        endOfGameText.init(ratio, this.width, Math.round(context.getResources().getDimension(R.dimen.end_of_game_text_size)));
-        endOfGameText.getPosition()[1] = 0f;
+        endOfGameText.init(ratio, this.width, Math.round(context.getResources()
+                .getDimension(R.dimen.end_of_game_text_size)));
+        endOfGameText.getPosition()[1] = .2f;
+
+        highScoreText.init(ratio, this.width, Math.round(context.getResources()
+                .getDimension(R.dimen.high_score_text_size)));
+        highScoreText.getPosition()[1] = 0f;
+
+        yourScoreText.init(ratio, this.width, Math.round(context.getResources()
+                .getDimension(R.dimen.your_score_text_size)));
+        yourScoreText.getPosition()[1] = -.2f;
 
         setViewLocations(viewLocations);
     }
 
-    public void drawFrame (float matrix[])
-    {
+    public void drawFrame(float matrix[]) {
 
-        if (coins.isEmpty())
-        {
+        if (coins.isEmpty()) {
             gameOver();
-        }
-		else
-        {
+        } else {
             update();
             drawEnemies(matrix);
             drawCoins(matrix);
 
             player.draw(matrix);
 
-            tiltIndicator.draw(matrix);
-            fpsIndicator.draw(matrix);
+
+            scoreIndicator.draw(matrix);
+            scoreIcon.draw(matrix);
+
+            coinIndicator.draw(matrix);
+            coinIcon.draw(matrix);
+
+            /*tiltIndicator.draw(matrix);
+            fpsIndicator.draw(matrix);*/
         }
 
 
+        if (!playing) {
+            if(currentScore > highScore){
+                saveHighScore(currentScore);
+                highScore = currentScore;
+            }
+            highScoreText.setText("High Score: " + highScore);
+            yourScoreText.setText("Your Score: " + currentScore);
 
-        if (!playing)
-        {
             endOfGameText.draw(matrix);
+            highScoreText.draw(matrix);
+            yourScoreText.draw(matrix);
         }
 
         fps = FPSCounter.logFrame();
     }
 
-    public void update()
-    {
+    public void update() {
+        if(frames % (framesBetweenAddingEnemies / 2) == 0){
+            currentScore += 1;
+        }
 
         updateEnemies();
-        updateCoins();
 
-        if(frames++ % framesBetweenAddingEnemies == 0){
+        if (frames++ % framesBetweenAddingEnemies == 0) {
             Enemy enemy = spawnEnemy();
             enemy.initRandom();
             addEnemy(enemy);
+            changeCoinSpeed = true;
         }
 
-        if(frames % 100 == 0 & framesBetweenAddingEnemies > 15){
+        updateCoins(changeCoinSpeed);
+        changeCoinSpeed = false;
+        player.update();
+
+        coinIndicator.setText(Integer.toString(coins.size()));
+        scoreIndicator.setText(Integer.toString(currentScore));
+       /* tiltIndicator.setText(Double.toString(tiltCalculator.getTilt()));
+        fpsIndicator.setText(Double.toString(fps));*/
+
+        if (frames % 100 == 0 & framesBetweenAddingEnemies > 15) {
             framesBetweenAddingEnemies--;
         }
 
-        player.update();
-
-        tiltIndicator.setText(Double.toString(tiltCalculator.getTilt()));
-        fpsIndicator.setText(Double.toString(fps));
 
     }
 
-    private void updateCoins()
-    {
-        for (int i = 0; i < coins.size(); i++)
-        {
+    private void updateCoins(boolean changeSpeed) {
+        boolean changeThisCoinsSpeed = true;
+
+        for (int i = 0; i < coins.size(); i++) {
             Coin coin = coins.get(i);
 
-            if (!coin.update())
-            {
+            if(RNG.randomBoolean() && changeSpeed){
+                changeThisCoinsSpeed = true;
+            } else {
+                changeThisCoinsSpeed = false;
+            }
+
+            if (!coin.update(changeThisCoinsSpeed)) {
                 coinPool.kill(coin);
                 coins.remove(i--);
             }
         }
 
-        for (int i = 0; i < destroyedCoins.size(); i++)
-        {
+        for (int i = 0; i < destroyedCoins.size(); i++) {
             DestroyedCoin destroyedCoin = destroyedCoins.get(i);
 
-            if (!destroyedCoin.update())
-            {
+            if (!destroyedCoin.update()) {
                 destroyedCoinPool.kill(destroyedCoin);
                 destroyedCoins.remove(i--);
             }
         }
     }
 
-    private void drawCoins (float matrix[])
-    {
-        if (coins.size() > 0)
-        {
+    private void drawCoins(float matrix[]) {
+        if (coins.size() > 0) {
             coins.get(0).batchDraw(matrix, (List<Texture>) ((Object) coins));
         }
 
-        if (destroyedCoins.size() > 0)
-        {
+        if (destroyedCoins.size() > 0) {
             destroyedCoins.get(0).batchDraw(matrix, (List<Texture>) ((Object) destroyedCoins));
         }
 
     }
 
-    public Enemy spawnEnemy ()
-    {
+    public Enemy spawnEnemy() {
         return enemyPool.spawn();
     }
 
-    public void addEnemy (Enemy enemy)
-    {
+    public void addEnemy(Enemy enemy) {
         enemy.setRatio(ratio);
         enemies.add(enemy);
     }
 
-    private void updateEnemies()
-    {
-        for (int i = 0; i < enemies.size(); i++)
-        {
+    private void updateEnemies() {
+        for (int i = 0; i < enemies.size(); i++) {
             Enemy enemy = enemies.get(i);
             boolean collided = false;
-            if (enemy.collidesWith(player))
-            {
+            if (enemy.collidesWith(player)) {
                 collided = true;
                 //enemyCountText.setText(Integer.toString(++enemyCount));
                 killEnemy(enemy);
                 enemyPool.kill(enemy);
                 enemies.remove(i--);
-            }
-            else
-            {
-                for (int j = 0; j < coins.size(); j++)
-                {
+                currentScore += 10;
+            } else {
+                for (int j = 0; j < coins.size(); j++) {
                     Coin coin = coins.get(j);
-                    if (enemy.collidesWith(coin))
-                    {
+                    if (enemy.collidesWith(coin)) {
                         destroyCoin(coin, enemy);
                         coinPool.kill(coin);
                         coins.remove(j--);
@@ -341,68 +468,56 @@ public class GameEngine
                 }
             }
 
-            if (!collided && !enemy.update())
-            {
+            if (!collided && !enemy.update()) {
                 enemyPool.kill(enemy);
                 enemies.remove(i--);
             }
         }
 
-        for (int i = 0; i < killedEnemies.size(); i++)
-        {
+        for (int i = 0; i < killedEnemies.size(); i++) {
             KilledEnemy killedEnemy = killedEnemies.get(i);
-            if (!killedEnemy.update())
-            {
+            if (!killedEnemy.update()) {
                 killedEnemyPool.kill(killedEnemy);
                 killedEnemies.remove(i--);
             }
         }
     }
 
-    private void drawEnemies(float matrix[]){
-        if (enemies.size() > 0)
-        {
+    private void drawEnemies(float matrix[]) {
+        if (enemies.size() > 0) {
             enemies.get(0).batchDraw(matrix, (List<Texture>) ((Object) enemies));
         }
 
-        if (killedEnemies.size() > 0)
-        {
+        if (killedEnemies.size() > 0) {
             killedEnemies.get(0).batchDraw(matrix, (List<Texture>) ((Object) killedEnemies));
         }
     }
 
-    private void killEnemy (Enemy enemy)
-    {
+    private void killEnemy(Enemy enemy) {
         float origPosition[] = enemy.getPosition();
         float origVector[] = enemy.getVector();
         float origScale[] = enemy.getScale();
         float newScale = origScale[0] / 4;
-        float p[] = new float[] {
+        float p[] = new float[]{
                 origScale[1] * 1 / 4,
                 origScale[1] * 1 / 2,
                 origScale[1],
                 origScale[1] * 1 / 2,
                 origScale[1] * 1 / 4
         };
-        for (int i = 0; i < 5; i++)
-        {
+        for (int i = 0; i < 5; i++) {
             float newPosition[] = new float[3];
             float newVector[] = new float[3];
             newPosition[1] = origPosition[1] + p[i]; //move it up a bit
             newVector[1] = (float) (origVector[1] * (0.8f + 0.2f * Math.random())); //slow it's speed a bit
 
-            if (i < 2)
-            {
+            if (i < 2) {
                 newPosition[0] = origPosition[0] - (float) (0.06f * Math.random());
                 newVector[0] = -(float) (Math.random() * .01f);
-            }
-            else if (i == 2)
-            {
+            } else if (i == 2) {
                 newPosition[0] = origPosition[0];
                 newVector[0] = 0;
-            }
-            else
-            {
+            } else {
                 newPosition[0] = origPosition[0] + (float) (0.06f * Math.random());
                 newVector[0] = (float) (Math.random() * .01f);
             }
@@ -413,30 +528,29 @@ public class GameEngine
         }
     }
 
-    private void destroyCoin(Coin coin, Enemy enemy){
+    private void destroyCoin(Coin coin, Enemy enemy) {
 
         DestroyedCoin destroyedCoin = destroyedCoinPool.spawn();
         destroyedCoin.init(ratio, coin.getPosition(), enemy.getVector(), coin.getScale()[0]);
         destroyedCoins.add(destroyedCoin);
     }
 
-    public void startGame()
-    {
-        if (playing)
-        {
+    public void startGame() {
+        if (playing) {
             return;
         }
+
+        loadHighScore();
         clearObjects();
 
         playing = true;
         frames = 0;
         startTime = System.currentTimeMillis();
 
-        enemyCount = 0;
+        currentScore = 0;
         framesBetweenAddingEnemies = 64;
 
-        for (int i = 0; i < 5; i++)
-        {
+        for (int i = 0; i < 5; i++) {
             Coin coin = coinPool.spawn();
             coin.init();
             coin.setRatio(ratio);
@@ -444,31 +558,28 @@ public class GameEngine
         }
     }
 
-    public void gameOver()
-    {
+    public void gameOver() {
         playing = false;
     }
 
-    private void clearObjects(){
-        if(!coins.isEmpty()){
+    private void clearObjects() {
+        if (!coins.isEmpty()) {
             coins.clear();
         }
-        if(!enemies.isEmpty()){
+        if (!enemies.isEmpty()) {
             enemies.clear();
         }
-        if(!killedEnemies.isEmpty()){
+        if (!killedEnemies.isEmpty()) {
             killedEnemies.clear();
         }
-        if(!destroyedCoins.isEmpty()){
+        if (!destroyedCoins.isEmpty()) {
             destroyedCoins.clear();
         }
     }
 
 
-    public void destroy ()
-    {
-        if (tiltCalculator != null)
-        {
+    public void destroy() {
+        if (tiltCalculator != null) {
             tiltCalculator.destroy();
         }
     }

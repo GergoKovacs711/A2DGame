@@ -13,4 +13,13 @@ public class RNG {
         float diff = upper - lower;
         return lower + ((float) Math.random() * diff);
     }
+
+    public static boolean randomBoolean(){
+        if(Math.random() < .5){
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 }
