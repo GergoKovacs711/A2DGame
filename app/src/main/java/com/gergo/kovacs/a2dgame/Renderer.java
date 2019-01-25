@@ -27,7 +27,7 @@ public class Renderer implements GLSurfaceView.Renderer
     public void onSurfaceCreated (GL10 gl, EGLConfig config)
     {
 
-        GLES20.glClearColor(0.09019f, 0.10588f, 0.33333f, 0.0f);
+        GLES20.glClearColor(0.0f, 0.0f, 0.1f, 0.0f);
 
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendEquation(GLES20.GL_FUNC_ADD);

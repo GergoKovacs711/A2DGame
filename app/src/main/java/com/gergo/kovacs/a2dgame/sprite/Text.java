@@ -91,7 +91,7 @@ public class Text extends Texture
             x = -glText.getLength(text) / 2;
         }
 
-        glText.begin(color[0], color[1], color[2], 1.0f, textMatrix);
+        glText.begin(color[0], color[1], color[2], color[3], textMatrix);
         glText.draw(text, x, 0, 0, 0);
         glText.end();
     }
@@ -119,7 +119,19 @@ public class Text extends Texture
         glText.load("ostrich-regular.ttf", textSize, 2, defaultPaddingY);
     }
 
-    public float getCellHeight(){
-        return glText.getHeight();
+    public void setAlpha(float alpha) throws IllegalArgumentException{
+
+        if(alpha < 0f || alpha > 255f){
+            throw new IllegalArgumentException("Alpha was: " + alpha);
+        }
+
+        this.color[3] = alpha / 255f;
+    }
+
+    public void setColor(float red, float green, float blue){
+        this.color[0] = red;
+        this.color[1] = green;
+        this.color[2] = blue;
+
     }
 }

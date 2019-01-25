@@ -50,6 +50,7 @@ public class GameEngine {
     private Text endOfGameText;
     private Text highScoreText;
     private Text yourScoreText;
+    private Text touchToRestartText;
     //private Text tiltIndicator;
     //private Text fpsIndicator;
     private Text coinIndicator;
@@ -61,6 +62,12 @@ public class GameEngine {
 
     //region game state
     private boolean playing = false;
+    private boolean gameOverSetupDone = false;
+
+    private float restartTextTargetAlpha = 254f;
+    private boolean increaseAlpha = false;
+
+    private boolean newHighScore = false;
 
     private int frames;
     private float fps;
@@ -95,19 +102,19 @@ public class GameEngine {
         startGame();
     }
 
-    private void loadHighScore(){
+    private void loadHighScore() {
         SharedPreferences sharedPref = context.getSharedPreferences(
                 context.getString(R.string.shared_preference_data), Context.MODE_PRIVATE);
         highScore = sharedPref.getLong(
                 context.getResources().getString(R.string.high_score_key), 0);
     }
 
-    private void saveHighScore(long newHighScore){
-            SharedPreferences sharedPref = context.getSharedPreferences(
-                    context.getString(R.string.shared_preference_data), Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putLong(context.getString(R.string.high_score_key), newHighScore);
-            editor.apply();
+    private void saveHighScore(long newHighScore) {
+        SharedPreferences sharedPref = context.getSharedPreferences(
+                context.getString(R.string.shared_preference_data), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putLong(context.getString(R.string.high_score_key), newHighScore);
+        editor.apply();
     }
 
     public void initSprites() {
@@ -168,13 +175,22 @@ public class GameEngine {
             highScoreText.reloadTexture();
         }
 
-        // player score text Init
+
         if (yourScoreText == null) {
             yourScoreText = new Text();
             yourScoreText.setContext(context);
             yourScoreText.setText("Your Score", Text.TEXT_ALIGN_CENTER, 0, Color.WHITE);
         } else {
             yourScoreText.reloadTexture();
+        }
+
+        // restart text Init
+        if (touchToRestartText == null) {
+            touchToRestartText = new Text();
+            touchToRestartText.setContext(context);
+            touchToRestartText.setText("Tap to restart", Text.TEXT_ALIGN_CENTER, 0, Color.WHITE);
+        } else {
+            touchToRestartText.reloadTexture();
         }
 
 
@@ -186,9 +202,9 @@ public class GameEngine {
             coinIndicator.reloadTexture();
         }
 
-        if (coinIcon == null){
+        if (coinIcon == null) {
             coinIcon = coinPool.spawn();
-        }else {
+        } else {
             coinIcon.reloadTexture();
         }
 
@@ -200,10 +216,10 @@ public class GameEngine {
             scoreIndicator.reloadTexture();
         }
 
-        if (scoreIcon == null){
+        if (scoreIcon == null) {
             scoreIcon = enemyPool.spawn();
             scoreIcon.setResource(R.drawable.score_icon);
-        }else {
+        } else {
             scoreIcon.reloadTexture();
         }
 
@@ -264,8 +280,7 @@ public class GameEngine {
         text.getPosition()[1] = coords[1];
     }
 
-    private void initHUDIcon (Moveable icon, float ratio, int id)
-    {
+    private void initHUDIcon(Moveable icon, float ratio, int id) {
         float coords[] = new float[2];
         float scale[] = new float[2];
 
@@ -276,24 +291,21 @@ public class GameEngine {
         icon.initIcon(coords[0], coords[1], scale[0], scale[1]);
     }
 
-    private void convertAndroidLocationToGLCentered (float glPos[], Rect androidLocation)
-    {
+    private void convertAndroidLocationToGLCentered(float glPos[], Rect androidLocation) {
         glPos[0] = androidLocation.centerX() / width * 2 - 1;
         float yPercentage = androidLocation.centerY() / height;
         float yPercentageGl = yPercentage * 2 * ratio;
         glPos[1] = -(yPercentageGl - ratio);
     }
 
-    private void convertAndroidLocationToGL (float glPos[], Rect androidLocation)
-    {
+    private void convertAndroidLocationToGL(float glPos[], Rect androidLocation) {
         glPos[0] = androidLocation.left / width * 2 - 1;
         float yPercentage = androidLocation.bottom / height;
         float yPercentageGl = yPercentage * 2 * ratio;
         glPos[1] = -(yPercentageGl - ratio);
     }
 
-    private void convertAndroidLocationToGLScale (float glScale[], Rect androidLocation)
-    {
+    private void convertAndroidLocationToGLScale(float glScale[], Rect androidLocation) {
         glScale[0] = androidLocation.width() / width;
         glScale[1] = androidLocation.width() / width;
     }
@@ -326,50 +338,68 @@ public class GameEngine {
                 .getDimension(R.dimen.your_score_text_size)));
         yourScoreText.getPosition()[1] = -.2f;
 
+        touchToRestartText.init(ratio, this.width, Math.round(context.getResources()
+                .getDimension(R.dimen.touch_to_restart_text_size)));
+        touchToRestartText.getPosition()[1] = -.4f;
+
         setViewLocations(viewLocations);
     }
 
     public void drawFrame(float matrix[]) {
 
-        if (coins.isEmpty()) {
-            gameOver();
-        } else {
-            update();
-            drawEnemies(matrix);
-            drawCoins(matrix);
+        if (playing) {
+            if (coins.isEmpty()) {
+                gameOver();
+            } else {
+                update();
+                drawEnemies(matrix);
+                drawCoins(matrix);
 
-            player.draw(matrix);
+                player.draw(matrix);
 
+                scoreIndicator.draw(matrix);
+                scoreIcon.draw(matrix);
 
-            scoreIndicator.draw(matrix);
-            scoreIcon.draw(matrix);
-
-            coinIndicator.draw(matrix);
-            coinIcon.draw(matrix);
+                coinIndicator.draw(matrix);
+                coinIcon.draw(matrix);
 
             /*tiltIndicator.draw(matrix);
             fpsIndicator.draw(matrix);*/
-        }
-
-
-        if (!playing) {
-            if(currentScore > highScore){
-                saveHighScore(currentScore);
-                highScore = currentScore;
             }
-            highScoreText.setText("High Score: " + highScore);
-            yourScoreText.setText("Your Score: " + currentScore);
+        } else {
+            if (!gameOverSetupDone) {
+                if (currentScore > highScore) {
+                    saveHighScore(currentScore);
+                    highScore = currentScore;
+                    newHighScore = true;
+                }
+                highScoreText.setText("High Score: " + highScore);
+                yourScoreText.setText("Your Score: " + currentScore);
+
+                highScoreText.setColor(1f, 1f, 1f);
+                yourScoreText.setColor(1f, 1f, 1f);
+                gameOverSetupDone = true;
+            }
+
+            flashRestartText();
+            touchToRestartText.setAlpha(restartTextTargetAlpha);
+
+            if(newHighScore && frames % 20 == 0){
+                changeHighScoreTextColor();
+            }
 
             endOfGameText.draw(matrix);
             highScoreText.draw(matrix);
             yourScoreText.draw(matrix);
+            touchToRestartText.draw(matrix);
+            frames++;
         }
 
         fps = FPSCounter.logFrame();
     }
 
     public void update() {
-        if(frames % (framesBetweenAddingEnemies / 2) == 0){
+        if (frames % (framesBetweenAddingEnemies / 2) == 0) {
             currentScore += 1;
         }
 
@@ -404,7 +434,7 @@ public class GameEngine {
         for (int i = 0; i < coins.size(); i++) {
             Coin coin = coins.get(i);
 
-            if(RNG.randomBoolean() && changeSpeed){
+            if (RNG.randomBoolean() && changeSpeed) {
                 changeThisCoinsSpeed = true;
             } else {
                 changeThisCoinsSpeed = false;
@@ -544,6 +574,8 @@ public class GameEngine {
         clearObjects();
 
         playing = true;
+        gameOverSetupDone = false;
+        newHighScore = false;
         frames = 0;
         startTime = System.currentTimeMillis();
 
@@ -577,11 +609,37 @@ public class GameEngine {
         }
     }
 
-
     public void destroy() {
         if (tiltCalculator != null) {
             tiltCalculator.destroy();
         }
+    }
+
+    private void flashRestartText(){
+        if(increaseAlpha){
+            restartTextTargetAlpha += 3f;
+            if(restartTextTargetAlpha >= 255f){
+                increaseAlpha = false;
+                restartTextTargetAlpha -= 20f;
+            }
+        }
+        else {
+            restartTextTargetAlpha -= 4.5f;
+            if(restartTextTargetAlpha <= 80f){
+                increaseAlpha = true;
+                restartTextTargetAlpha += 30f;
+            }
+        }
+    }
+
+    private void changeHighScoreTextColor(){
+        float red, green, blue;
+        red = RNG.randomFloatBetween(0f, 1f);
+        green = RNG.randomFloatBetween(0f, 1f);
+        blue = RNG.randomFloatBetween(0f, 1f);
+
+        highScoreText.setColor(red, green, blue);
+        yourScoreText.setColor(red, green, blue);
     }
 
 }
